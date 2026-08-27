@@ -1,98 +1,108 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+// Import the useRouter hook from expo-router, which gives us the ability to navigate between screens.
+import { useRouter } from 'expo-router';
+// Import standard UI components from React Native to build our layout.
+import { ImageBackground, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+// Define the Landing component, which is exported as the default so Expo Router knows to render it.
+export default function Landing() {
+  // Initialize the router so we can use it to change screens when a button is clicked.
+  const router = useRouter();
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    // ImageBackground is a component that displays an image and allows us to put other components inside of it (on top of the image).
+    <ImageBackground
+      // Load the image from our local assets folder.
+      source={require('../../assets/images/travel_landing_bg.jpg')}
+      // Apply the 'background' style defined at the bottom of this file.
+      style={styles.background}
+      // 'cover' means the image will scale proportionally to completely fill the screen without being stretched out of shape.
+      resizeMode="cover"
+    >
+      {/* We use a View here to act as a dark overlay. This darkens the image so the white text is easier to read. */}
+      <View style={styles.overlay}>
+        
+        {/* This View holds all our text and the button, and adds padding around them. */}
+        <View style={styles.contentContainer}>
+          
+          {/* Text component displaying the main headline. {'\n'} is used to force a line break. */}
+          <Text style={styles.title}>Discover Your{'\n'}Next Adventure</Text>
+          
+          {/* Text component displaying a smaller subtitle description. */}
+          <Text style={styles.subtitle}>
+            Explore the most beautiful destinations around the world and book your dream vacation today.
+          </Text>
+          
+          {/* TouchableOpacity is a button that slightly fades out when you press it (giving visual feedback). */}
+          <TouchableOpacity 
+            style={styles.button}
+            // When pressed, replace the current screen with the home screen ('/home').
+            // We use replace instead of push so the user can't press "back" to return to the landing screen.
+            onPress={() => router.replace('/home')}
+            // activeOpacity controls how transparent the button gets when pressed (0.8 = 80% opaque).
+            activeOpacity={0.8}
+          >
+            {/* The text inside the button */}
+            <Text style={styles.buttonText}>Get Started</Text>
+          </TouchableOpacity>
+
+        </View>
+      </View>
+    </ImageBackground>
   );
 }
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
-
+// StyleSheet.create helps organize our styles and provides better performance and autocomplete.
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  // The background needs to take up all available space.
+  background: {
+    flex: 1, // 'flex: 1' means it will expand to fill the parent container entirely.
+    width: '100%',
+    height: '100%',
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+  // The dark overlay that sits on top of the background image.
+  overlay: {
+    flex: 1, // Fill the whole screen.
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', // A black color with 40% opacity (transparency).
+    justifyContent: 'flex-end', // Push all the content inside this view to the bottom of the screen.
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  // The container holding the text and button.
+  contentContainer: {
+    padding: 30, // Add 30 pixels of space on all sides (top, bottom, left, right).
+    paddingBottom: 60, // Specifically add 60 pixels of space at the bottom to lift it up from the very edge.
   },
+  // Style for the main headline text.
   title: {
-    textAlign: 'center',
+    fontSize: 42, // Large text size.
+    fontWeight: 'bold', // Thick text.
+    color: '#ffffff', // White text color.
+    marginBottom: 15, // Add 15 pixels of space below the title.
+    lineHeight: 48, // Control the vertical spacing between the two lines of the title.
   },
-  code: {
-    textTransform: 'uppercase',
+  // Style for the smaller description text.
+  subtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)', // White text but with 80% opacity so it's slightly gray/dimmer than the title.
+    marginBottom: 40, // Add 40 pixels of space below the subtitle, before the button.
+    lineHeight: 24, // Make the text easier to read by spacing out the lines.
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  // Style for the Get Started button.
+  button: {
+    backgroundColor: '#0066FF', // Vibrant blue background color.
+    paddingVertical: 18, // Add 18 pixels of space on the top and bottom inside the button.
+    borderRadius: 16, // Curve the corners of the button by 16 pixels.
+    alignItems: 'center', // Center the text horizontally inside the button.
+    
+    // The following properties create a shadow effect under the button (works differently on iOS and Android).
+    shadowColor: '#0066FF', // Shadow color matches the button color.
+    shadowOffset: { width: 0, height: 10 }, // Push the shadow 10 pixels downwards.
+    shadowOpacity: 0.3, // Make the shadow 30% opaque.
+    shadowRadius: 20, // Blur the shadow by 20 pixels.
+    elevation: 10, // Required for shadows to show up on Android devices.
+  },
+  // Style for the text inside the button.
+  buttonText: {
+    color: '#ffffff', // White text.
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
