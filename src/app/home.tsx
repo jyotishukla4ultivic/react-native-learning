@@ -1,115 +1,103 @@
-// Import the useRouter hook to handle navigation between screens.
 import { useRouter } from 'expo-router';
-// Import essential UI components from React Native.
-// ScrollView: allows content to be scrollable if it exceeds the screen size.
-// StyleSheet: used to create CSS-like styles.
-// Text: used to display text on the screen.
-// TextInput: an input field where users can type text (like a search bar).
-// TouchableOpacity: a wrapper that makes things clickable and fades them slightly when pressed.
-// View: a fundamental container used to build layouts (similar to a <div> in HTML).
-// Image: used to display images from a URL or local file.
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image } from 'react-native';
+import { useProducts } from '../context/ProductContext';
+import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
 
-// Dummy data for our horizontal list of popular destinations.
-// We define an array of objects, each containing an id, a name, and a web URL for an image.
-const DESTINATIONS = [
-  { id: '1', name: 'Maldives', image: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?q=80&w=600&auto=format&fit=crop' },
-  { id: '2', name: 'Bali', image: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=600&auto=format&fit=crop' },
-  { id: '3', name: 'Paris', image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=600&auto=format&fit=crop' },
-];
-
-// Dummy data for our vertical list of recommended hotels.
-const HOTELS = [
-  { id: '1', name: 'Oceanview Villa', location: 'Maldives', price: '$450/night', image: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=600&auto=format&fit=crop' },
-  { id: '2', name: 'Jungle Retreat', location: 'Bali', price: '$210/night', image: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?q=80&w=600&auto=format&fit=crop' },
-];
+const CATEGORIES = ['All', 'Lehengas', 'Suits', 'Sarees', 'Kurtas', 'Kurtis'];
 
 export default function Home() {
-  // Initialize our router so we can navigate around the app.
   const router = useRouter();
+  const { products } = useProducts();
+  const { role, login, logout } = useAuth();
+  
+  const [activeCategory, setActiveCategory] = useState('All');
+
+  const filteredProducts = activeCategory === 'All' 
+    ? products 
+    : products.filter(p => p.category === activeCategory);
+
+  const handleAdminToggle = () => {
+    if (role === 'admin') {
+      logout();
+    } else {
+      login('admin');
+    }
+  };
 
   return (
-    // The main container View holding the entire screen.
     <View style={styles.container}>
-      
-      {/* ScrollView allows the user to scroll up and down if the content is too tall. */}
-      {/* showsVerticalScrollIndicator={false} hides the scrollbar on the side of the screen. */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         {/* === Header Section === */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Hello, Traveler!</Text>
-            <Text style={styles.subtitle}>Where do you want to go?</Text>
+            <Text style={styles.greeting}>Welcome,</Text>
+            <Text style={styles.subtitle}>{role === 'admin' ? 'Admin' : 'Guest'}</Text>
           </View>
-          {/* Avatar button. When clicked, it takes the user back to the landing page as an example. */}
-          <TouchableOpacity 
-            style={styles.avatarPlaceholder} 
-            onPress={() => router.replace('/')}
-          >
-            <Text style={styles.avatarText}>T</Text>
-          </TouchableOpacity>
+          
+          <View style={styles.headerActions}>
+            {role === 'admin' && (
+              <TouchableOpacity style={styles.adminButton} onPress={() => router.push('/admin')}>
+                <Text style={styles.adminButtonText}>Dashboard</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.avatarPlaceholder} onPress={handleAdminToggle}>
+              <Text style={styles.avatarText}>{role === 'admin' ? 'X' : 'A'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* === Search Bar Section === */}
         <View style={styles.searchContainer}>
           <TextInput 
             style={styles.searchInput}
-            placeholder="Search destinations, hotels..."
-            placeholderTextColor="#999" // Sets the color of the placeholder text.
+            placeholder="Search Lehengas, Kurtis..."
+            placeholderTextColor="#999"
           />
         </View>
 
-        {/* === Popular Destinations Section === */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Popular Destinations</Text>
-          <TouchableOpacity><Text style={styles.seeAll}>See All</Text></TouchableOpacity>
-        </View>
-        
-        {/* A horizontal ScrollView for our destination cards. */}
+        {/* === Categories Section === */}
         <ScrollView 
-          horizontal // This makes the scrolling left-to-right instead of up-and-down.
-          showsHorizontalScrollIndicator={false} // Hide the horizontal scrollbar.
-          style={styles.horizontalScroll}
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.categoriesScroll}
           contentContainerStyle={{ paddingHorizontal: 20 }}
         >
-          {/* We use .map() to loop through our DESTINATIONS array and create a card for each item. */}
-          {DESTINATIONS.map(item => (
-            // A TouchableOpacity acts as the card wrapper so the whole card is clickable.
-            // When looping in React, each item MUST have a unique 'key' prop.
-            <TouchableOpacity key={item.id} style={styles.destinationCard}>
-              {/* Load the image from the URL in our data array. */}
-              <Image source={{ uri: item.image }} style={styles.destinationImage} />
-              
-              {/* A dark overlay at the bottom of the card to make the text readable. */}
-              <View style={styles.destinationOverlay}>
-                <Text style={styles.destinationName}>{item.name}</Text>
-              </View>
+          {CATEGORIES.map((cat, index) => (
+            <TouchableOpacity 
+              key={index} 
+              style={[styles.categoryBadge, activeCategory === cat && styles.activeCategoryBadge]}
+              onPress={() => setActiveCategory(cat)}
+            >
+              <Text style={[styles.categoryText, activeCategory === cat && styles.activeCategoryText]}>
+                {cat}
+              </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        {/* === Recommended Hotels Section === */}
-        {/* We reuse the sectionHeader style, but add a 30px margin to the top just for this specific header. */}
-        <View style={[styles.sectionHeader, { marginTop: 30 }]}>
-          <Text style={styles.sectionTitle}>Recommended Hotels</Text>
+        {/* === Products List === */}
+        <View style={[styles.sectionHeader, { marginTop: 20 }]}>
+          <Text style={styles.sectionTitle}>Featured Collection</Text>
         </View>
         
-        {/* A simple View to hold our vertical list of hotels. */}
         <View style={styles.verticalList}>
-          {/* Loop through our HOTELS array to create a card for each hotel. */}
-          {HOTELS.map(item => (
-            <TouchableOpacity key={item.id} style={styles.hotelCard}>
-              <Image source={{ uri: item.image }} style={styles.hotelImage} />
-              
-              {/* This View groups the text information (name, location, price) together next to the image. */}
-              <View style={styles.hotelInfo}>
-                <Text style={styles.hotelName}>{item.name}</Text>
-                <Text style={styles.hotelLocation}>{item.location}</Text>
-                <Text style={styles.hotelPrice}>{item.price}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {filteredProducts.length === 0 ? (
+            <Text style={styles.noDataText}>No items found in this category.</Text>
+          ) : (
+            filteredProducts.map(item => (
+              <TouchableOpacity key={item.id} style={styles.productCard}>
+                <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+                
+                <View style={styles.productInfo}>
+                  <Text style={styles.productName}>{item.title}</Text>
+                  <Text style={styles.productCategory}>{item.category}</Text>
+                  <Text style={styles.productPrice}>₹{item.price} / day</Text>
+                </View>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
         
       </ScrollView>
@@ -117,23 +105,21 @@ export default function Home() {
   );
 }
 
-// === Styles Section ===
 const styles = StyleSheet.create({
   container: {
-    flex: 1, // Take up the whole screen height.
-    backgroundColor: '#FAFAFA', // A very light gray background color.
+    flex: 1,
+    backgroundColor: '#FAFAFA',
   },
   scrollContent: {
-    paddingTop: 60, // Add space at the top so content doesn't hide behind the phone's status bar (clock/battery).
-    paddingBottom: 40, // Add space at the bottom so the last item isn't cut off.
+    paddingTop: 60,
+    paddingBottom: 40,
   },
-  // Header styles
   header: {
-    flexDirection: 'row', // Align the greeting text and avatar side-by-side instead of stacked.
-    justifyContent: 'space-between', // Push the text to the left and avatar to the right.
-    alignItems: 'center', // Vertically center them.
-    paddingHorizontal: 20, // Add padding on the left and right sides.
-    marginBottom: 25, // Add space below the header.
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 25,
   },
   greeting: {
     fontSize: 24,
@@ -145,43 +131,75 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  adminButton: {
+    backgroundColor: '#D4AF37',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  adminButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
   avatarPlaceholder: {
     width: 45,
     height: 45,
-    backgroundColor: '#0066FF',
-    borderRadius: 25, // A border radius of half the width/height makes it a perfect circle.
-    justifyContent: 'center', // Center the text 'T' vertically.
-    alignItems: 'center', // Center the text 'T' horizontally.
+    backgroundColor: '#333',
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   avatarText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
   },
-  // Search styles
   searchContainer: {
     paddingHorizontal: 20,
-    marginBottom: 30,
+    marginBottom: 20,
   },
   searchInput: {
-    backgroundColor: '#fff', // White background for the input box.
-    paddingHorizontal: 20, // Space inside the input box on the left/right.
-    paddingVertical: 15, // Space inside the input box on the top/bottom.
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
     borderRadius: 12,
     fontSize: 16,
     color: '#333',
-    // Shadow properties for the search bar
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05, // Very light shadow.
+    shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
-  // Reusable section header styles
+  categoriesScroll: {
+    flexGrow: 0,
+    marginBottom: 10,
+  },
+  categoryBadge: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#eee',
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  activeCategoryBadge: {
+    backgroundColor: '#D4AF37',
+  },
+  categoryText: {
+    fontSize: 14,
+    color: '#555',
+    fontWeight: '600',
+  },
+  activeCategoryText: {
+    color: '#fff',
+  },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end', // Align text to the bottom baseline.
     paddingHorizontal: 20,
     marginBottom: 15,
   },
@@ -190,79 +208,50 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  seeAll: {
-    color: '#0066FF', // Blue accent color for the link.
-    fontWeight: '600',
-  },
-  // Destination card styles
-  horizontalScroll: {
-    flexGrow: 0, // Prevents the horizontal scrollview from expanding vertically.
-  },
-  destinationCard: {
-    width: 160,
-    height: 220,
-    marginRight: 15,
-    borderRadius: 16,
-    overflow: 'hidden', // Ensures the image doesn't bleed out of the rounded corners.
-  },
-  destinationImage: {
-    width: '100%',
-    height: '100%',
-  },
-  destinationOverlay: {
-    position: 'absolute', // Allows us to place this View exactly where we want over the image.
-    bottom: 0, // Stick to the bottom.
-    left: 0, // Stick to the left.
-    right: 0, // Stick to the right (making it full width).
-    padding: 15,
-    backgroundColor: 'rgba(0,0,0,0.3)', // Semi-transparent black background.
-  },
-  destinationName: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  // Hotel card styles
   verticalList: {
     paddingHorizontal: 20,
   },
-  hotelCard: {
-    flexDirection: 'row', // Align image and text side-by-side.
+  productCard: {
+    flexDirection: 'row',
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 12,
-    marginBottom: 15, // Space between cards.
-    // Subtle shadow for the card
+    marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 3,
   },
-  hotelImage: {
+  productImage: {
     width: 100,
     height: 100,
     borderRadius: 12,
   },
-  hotelInfo: {
-    flex: 1, // Takes up the remaining horizontal space after the image.
-    marginLeft: 15, // Space between image and text.
-    justifyContent: 'center', // Center the text vertically next to the image.
+  productInfo: {
+    flex: 1,
+    marginLeft: 15,
+    justifyContent: 'center',
   },
-  hotelName: {
+  productName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 4,
   },
-  hotelLocation: {
+  productCategory: {
     fontSize: 14,
-    color: '#666', // Gray text for the location.
+    color: '#666',
     marginBottom: 8,
   },
-  hotelPrice: {
+  productPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#0066FF', // Blue text for the price to make it pop.
+    color: '#D4AF37',
   },
+  noDataText: {
+    textAlign: 'center',
+    color: '#999',
+    marginTop: 20,
+  }
 });
